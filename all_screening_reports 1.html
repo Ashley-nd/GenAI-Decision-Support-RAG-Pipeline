@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FRA Grade Crossing — All Screening Reports</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+:root {
+  --navy:   #1C2B5E;
+  --teal:   #0D7C8C;
+  --green:  #059669;
+  --coral:  #D85A30;
+  --amber:  #D97706;
+  --gray:   #64748B;
+  --bg:     #EEF2F7;
+  --white:  #FFFFFF;
+  --border: #DDE5F0;
+  --sidebar-w: 250px;
+}
+
+body {
+  font-family: 'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  background: var(--bg);
+  color: var(--navy);
+  line-height: 1.65;
+}
+
+/* ══ Sidebar ══════════════════════════════════════════════ */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: #0D1A3E;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 200;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.18);
+}
+
+.sidebar-top {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+.sidebar-brand {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #5DCAA5;
+  margin-bottom: 8px;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #E2E8F0;
+  line-height: 1.4;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius:2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  text-decoration: none;
+  color: #94A3B8;
+  font-size: 11.5px;
+  line-height: 1.45;
+  border-left: 3px solid transparent;
+  transition: all .15s ease;
+}
+.nav-item:hover {
+  color: #E2E8F0;
+  background: rgba(255,255,255,0.05);
+  border-left-color: #5DCAA5;
+}
+.nav-item.active {
+  color: #E2E8F0;
+  background: rgba(255,255,255,0.07);
+  border-left-color: #5DCAA5;
+}
+
+.nav-num {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.10);
+  color: #E2E8F0;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-text { flex: 1; }
+
+.nav-verdict {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.nav-pass    { background:#059669; color:#fff; }
+.nav-revised { background:#D97706; color:#fff; }
+
+.sidebar-footer {
+  padding: 14px 18px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 10px;
+  color: #475569;
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+
+/* ══ Main ════════════════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+}
+
+/* ══ Page header ═════════════════════════════════════════ */
+.page-header {
+  background: linear-gradient(135deg, #1C2B5E 0%, #0D1A3E 100%);
+  padding: 48px 52px 44px;
+  color: #fff;
+  position: relative;
+}
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0D7C8C 0%, #5DCAA5 50%, #0D7C8C 100%);
+}
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .20em;
+  text-transform: uppercase;
+  color: #5DCAA5;
+  margin-bottom: 12px;
+}
+.page-header h1 {
+  font-size: 30px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+.page-header p {
+  font-size: 13.5px;
+  color: #94A3B8;
+  max-width: 680px;
+  line-height: 1.7;
+}
+
+.stats-row {
+  display: flex;
+  gap: 20px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.stat-chip {
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 11.5px;
+  color: #CBD5E1;
+}
+.stat-chip strong {
+  display: block;
+  font-size: 20px;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+/* ══ Content body ════════════════════════════════════════ */
+.content {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+/* ══ Report section ══════════════════════════════════════ */
+.report-section { margin-bottom: 4px; }
+.section-gap   { height: 40px; }
+
+.rpt-header {
+  background: linear-gradient(135deg, #1C2B5E 0%, #152350 100%);
+  border-radius: 14px 14px 0 0;
+  padding: 28px 32px 24px;
+  color: #fff;
+}
+.rpt-eyebrow {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #5DCAA5;
+  margin-bottom: 10px;
+}
+.rpt-title {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+.rpt-query {
+  font-size: 12.5px;
+  color: #94A3B8;
+  font-style: italic;
+  margin-bottom: 18px;
+  line-height: 1.65;
+  max-width: 860px;
+}
+
+.badge-row { display:flex; flex-wrap:wrap; gap:7px; }
+.badge {
+  font-size: 10px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: #CBD5E1;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.badge-teal  { background:#0D7C8C; border-color:#0D7C8C; color:#fff; }
+.badge-coral { background:#D85A30; border-color:#D85A30; color:#fff; }
+
+/* ══ Verdict strip ═══════════════════════════════════════ */
+.verdict-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-width: 0 1.5px 1.5px 1.5px;
+  border-style: solid;
+  padding: 14px 24px;
+  background: #fff;
+}
+.verdict-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.verdict-main {
+  font-size: 13px;
+  font-weight: 700;
+}
+.verdict-note {
+  font-size: 12px;
+  color: #64748B;
+}
+
+/* ══ Cards ═══════════════════════════════════════════════ */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-top: none;
+  padding: 26px 30px;
+  box-shadow: 0 1px 4px rgba(28,43,94,0.04);
+}
+.card:last-child { border-radius: 0 0 14px 14px; }
+
+.card-green  { border-left: 4px solid #059669; }
+.card-amber  { border-left: 4px solid #D97706; }
+.card-muted  { border-left: 4px solid #CBD5E1; }
+
+.card-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: #64748B;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+/* ══ Prose ═══════════════════════════════════════════════ */
+.prose {
+  font-size: 14px;
+  line-height: 1.85;
+  color: #334155;
+}
+.prose-muted { color: #6B7280; }
+.prose strong { color: #1C2B5E; }
+
+/* ══ Code ════════════════════════════════════════════════ */
+.code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: #1C2B5E;
+  font-family: 'Consolas','Courier New',monospace;
+}
+
+/* ══ Chart ═══════════════════════════════════════════════ */
+.chart-wrap { overflow-x: auto; }
+
+/* ══ Footer ══════════════════════════════════════════════ */
+.footer {
+  text-align: center;
+  font-size: 11.5px;
+  color: #94A3B8;
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  line-height: 1.9;
+}
+.footer strong { color: #64748B; }
+
+/* ══ Responsive ══════════════════════════════════════════ */
+@media (max-width:860px) {
+  .sidebar { position:static; width:100%; height:auto; }
+  .main    { margin-left:0; }
+  .content { padding: 28px 18px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-brand">BSAN 765 · Group 4</div>
+    <div class="sidebar-title">7-Agent Screening Reports</div>
+  </div>
+  <div class="sidebar-nav">
+    
+    <a href="#report-1" class="nav-item">
+      <span class="nav-num">1</span>
+      <span class="nav-text">Top passive crossings with fatalities</span>
+      <span class="nav-verdict nav-revised">REVISED</span>
+    </a>
+    <a href="#report-2" class="nav-item">
+      <span class="nav-num">2</span>
+      <span class="nav-text">Warning device fatality pattern analysis</span>
+      <span class="nav-verdict nav-revised">REVISED</span>
+    </a>
+    <a href="#report-3" class="nav-item">
+      <span class="nav-num">3</span>
+      <span class="nav-text">State-level risk and funding landscape</span>
+      <span class="nav-verdict nav-revised">REVISED</span>
+    </a>
+    <a href="#report-4" class="nav-item">
+      <span class="nav-num">4</span>
+      <span class="nav-text">Crossing 870880G full report</span>
+      <span class="nav-verdict nav-revised">REVISED</span>
+    </a>
+  </div>
+  <div class="sidebar-footer">
+    7-Agent LangGraph Pipeline<br>
+    FRA Form 71 · Form 57 · 49 CFR<br>
+    RCE NOFO · FRA/FHWA Guidance
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-eyebrow">Railroad Grade Crossing Safety · AI Screening System</div>
+    <h1>Grade Crossing Safety Screening Reports</h1>
+    <p>7-Agent LangGraph feedback-loop pipeline — Retrieval · Compliance · Risk · Funding · Summary · Critic · Revised Summary</p>
+    <div class="stats-row">
+      <div class="stat-chip"><strong>4</strong>Screening reports</div>
+      <div class="stat-chip"><strong>7</strong>Specialized agents</div>
+      <div class="stat-chip"><strong>4,200+</strong>Document chunks indexed</div>
+      <div class="stat-chip"><strong>750K+</strong>Crossings in dataset</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    
+    <section class="report-section" id="report-1">
+
+      <!-- Report header -->
+      <div class="rpt-header">
+        <div class="rpt-eyebrow">Report 1 of 4</div>
+        <h2 class="rpt-title">Q1 — Top passive crossings with fatalities</h2>
+        <p class="rpt-query">"Identify the top 10 public crossings with passive warning devices only and at least one fatality in the last 5 years. Assess safety risk, applicable 49 CFR compliance requirements, and whether each appears to be a candidate for RCE grant funding review."</p>
+        <div class="badge-row">
+          <span class="badge">Retrieval</span>
+          <span class="badge">Compliance</span>
+          <span class="badge">Risk Flagging</span>
+          <span class="badge">Funding</span>
+          <span class="badge">Summary</span>
+          <span class="badge badge-coral">Critic</span>
+          <span class="badge badge-teal">Revised Summary</span>
+        </div>
+      </div>
+
+      <!-- Verdict strip -->
+      <div class="verdict-strip" style="background:#FFFBEB;border-color:#D97706;">
+        <div class="verdict-dot" style="background:#D97706;"></div>
+        <span class="verdict-main" style="color:#D97706;">Critic Verdict: REVISED</span>
+        <span class="verdict-note">— Memo was revised</span>
+      </div>
+
+      <!-- Final memo -->
+      <div class="card card-green">
+        <div class="card-label" style="color:#059669">Final Revised Screening Memo</div>
+        <div class="prose">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>Crossing ID 029645U</strong>: Knightsen, CA; Passive warning devices: Stop signs; AADT: 50; Train movements daily: 13; Total incidents: 7; Fatalities (total): 5; Fatalities (last 5 years): 4; Injuries (last 5 years): 2.<br>- <strong>Crossing ID 058721N</strong>: Ponderay, ID; Passive warning devices: Crossbucks, Yield signs; AADT: 420; Train movements daily: 24; Total incidents: 4; Fatalities (last 5 years): 4; Injuries (last 5 years): 1.<br><br><strong>2. Safety Risk Flags</strong><br>- <strong>Crossing ID 029645U</strong>: High fatality rate with 4 fatalities in the last 5 years; significant safety concerns despite low AADT. The incident rate suggests a heightened risk at this crossing.<br>- <strong>Crossing ID 058721N</strong>: Notable incident history with 4 fatalities in total, indicating a critical need for enhanced safety measures. The higher AADT and train movements further increase exposure risk at this crossing.<br>- Both crossings utilize only passive warning devices, which are generally less effective than active systems in preventing incidents.<br><br><strong>3. Compliance Considerations</strong><br>- Both crossings appear to be in compliance with general 49 CFR requirements; however, a detailed review of specific compliance issues related to passive warning devices and their effectiveness is warranted. The effectiveness of the current warning devices should be evaluated against the safety records of these crossings.<br><br><strong>4. Funding Fit</strong><br>- While Crossing ID 029645U has a significant incident history, further review is necessary to determine its alignment with RCE Program funding priorities. The presence of only passive warning devices and the history of fatalities may indicate a need for safety improvements, but eligibility for funding cannot be confirmed without a detailed cost-effectiveness analysis and assessment of compliance with funding eligibility conditions, including the 20% non-Federal match requirement.<br>- Crossing ID 058721N also requires further review to assess its potential for RCE funding, given its incident history and the limitations of passive warning devices.<br><br><strong>5. Recommended Next Steps</strong><br>- Conduct a detailed safety assessment of both crossings, focusing on incident data, traffic patterns, and potential improvements.<br>- Gather additional safety data and metrics to evaluate eligibility for RCE grant funding.<br>- Explore options for upgrading passive warning devices to active systems to enhance safety and reduce the risk of future incidents.<br><br><strong>6. Sources Used</strong><br>- Accident Prediction and Severity (APS).pdf<br>- FY23-24 RCE Project Selections.pdf<br>- FY 24-25 NOFO FSP 12.3.25.pdf<br>- FRA Railroad Crossing Elimination Program NOFO 063022.pdf<br><br>This revised memo addresses the critiques by providing missing information, clarifying compliance considerations, and using cautious language regarding funding eligibility. Further review is emphasized where necessary.</div>
+      </div>
+
+      <div class="card card-amber"><div class="card-label" style="color:#D97706">Critic Agent Review</div><div class="prose">1. <strong>UNSUPPORTED CLAIMS</strong>  <br>None found.<br><br>2. <strong>MISSING INFORMATION</strong>  <br>- The Average Annual Daily Traffic (AADT) for Crossing ID 058721N is not specified, which is crucial for assessing safety risk.<br>- Specific compliance issues related to 49 CFR requirements are not discussed, limiting the compliance assessment.<br>- Details on the types of passive warning devices and their effectiveness could enhance the analysis.<br><br>3. <strong>QUERY ANSWERED</strong>  <br>No — the memo does not fully address the requirement for identifying the top 10 crossings, as it only lists two crossings.<br><br>4. <strong>FUNDING / TREATMENT OVERCLAIM CHECK</strong>  <br>The memo uses cautious language regarding RCE funding eligibility but could clarify that further review is necessary before confirming eligibility.<br><br>5. <strong>OVERALL VERDICT</strong>  <br>OVERALL VERDICT: REVISE</div></div>
+      <div class="card card-muted"><div class="card-label" style="color:#94A3B8">Original Memo (Before Revision)</div><div class="prose prose-muted">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>Crossing ID 029645U</strong>: Knightsen, CA; Passive warning devices: Stop signs; AADT: 50; Train movements daily: 13; Total incidents: 7; Fatalities (total): 5; Fatalities (last 5 years): 4; Injuries (last 5 years): 2.<br>- <strong>Crossing ID 058721N</strong>: Ponderay, ID; Passive warning devices: Crossbucks, Yield signs; AADT: Not specified; Train movements daily: 24; Total incidents: 4; Fatalities (last 5 years): 4.<br><br><strong>2. Safety Risk Flags</strong><br>- <strong>Crossing ID 029645U</strong>: High fatality rate with 4 fatalities in the last 5 years; significant safety concerns despite low AADT.<br>- <strong>Crossing ID 058721N</strong>: Notable incident history with 2 incidents in the last 5 years; critical need for enhanced safety measures.<br>- Both crossings have a relatively high number of daily train movements, increasing exposure risk at passive crossings.<br>- Use of only passive warning devices raises the risk of incidents.<br><br><strong>3. Compliance Considerations</strong><br>- No specific compliance issues identified; context not provided for detailed compliance assessment.<br><br><strong>4. Funding Fit</strong><br>- Crossing ID 029645U may align with RCE Program funding priorities due to its significant incident history and the presence of only passive warning devices.<br>- Further review is necessary to assess cost-effectiveness and compliance with funding eligibility conditions, including the 20% non-Federal match requirement.<br><br><strong>5. Recommended Next Steps</strong><br>- Conduct a detailed safety assessment of both crossings, focusing on incident data and potential improvements.<br>- Gather additional safety data and metrics to evaluate eligibility for RCE grant funding.<br>- Explore options for upgrading passive warning devices to active systems to enhance safety.<br><br><strong>6. Sources Used</strong><br>- Accident Prediction and Severity (APS).pdf<br>- FY23-24 RCE Project Selections.pdf<br>- FY 24-25 NOFO FSP 12.3.25.pdf<br>- FRA Railroad Crossing Elimination Program NOFO 063022.pdf</div></div>
+      <div class="card"><div class="card-label">Structured Facts Retrieved</div><pre class='code'>{
+  &quot;scenario_filter_results&quot;: [
+    {
+      &quot;crossing_id&quot;: &quot;029645U&quot;,
+      &quot;state&quot;: &quot;CA&quot;,
+      &quot;county&quot;: &quot;CONTRA COSTA&quot;,
+      &quot;city&quot;: &quot;KNIGHTSEN&quot;,
+      &quot;street&quot;: &quot;PRIVATE&quot;,
+      &quot;warning_device_label&quot;: &quot;Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 50.0,
+      &quot;train_movements_daily&quot;: 13.0,
+      &quot;max_train_speed&quot;: 60.0,
+      &quot;incident_count_total&quot;: 7.0,
+      &quot;fatalities_total&quot;: 5.0,
+      &quot;injuries_total&quot;: 3.0,
+      &quot;incident_count_5yr&quot;: 1.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 2.0,
+      &quot;incident_rate_5yr&quot;: 1.0958904109589042e-05
+    },
+    {
+      &quot;crossing_id&quot;: &quot;058721N&quot;,
+      &quot;state&quot;: &quot;ID&quot;,
+      &quot;county&quot;: &quot;BONNER&quot;,
+      &quot;city&quot;: &quot;PONDERAY&quot;,
+      &quot;street&quot;: &quot;W SELLE RD&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks; Yield signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 420.0,
+      &quot;train_movements_daily&quot;: 24.0,
+      &quot;max_train_speed&quot;: 79.0,
+      &quot;incident_count_total&quot;: 4.0,
+      &quot;fatalities_total&quot;: 4.0,
+      &quot;injuries_total&quot;: 1.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 1.0,
+      &quot;incident_rate_5yr&quot;: 2.609262883235486e-06
+    },
+    {
+      &quot;crossing_id&quot;: &quot;819393C&quot;,
+      &quot;state&quot;: &quot;ID&quot;,
+      &quot;county&quot;: &quot;CANYON&quot;,
+      &quot;city&quot;: &quot;NOTUS&quot;,
+      &quot;street&quot;: &quot;PRIVATE&quot;,
+      &quot;warning_device_label&quot;: &quot;Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 1.0,
+      &quot;train_movements_daily&quot;: 21.0,
+      &quot;max_train_speed&quot;: 70.0,
+      &quot;incident_count_total&quot;: 1.0,
+      &quot;fatalities_total&quot;: 4.0,
+      &quot;injuries_total&quot;: 0.0,
+      &quot;incident_count_5yr&quot;: 1.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 0.0,
+      &quot;incident_rate_5yr&quot;: 0.000547945205479452
+    },
+    {
+      &quot;crossing_id&quot;: &quot;350404K&quot;,
+      &quot;state&quot;: &quot;TN&quot;,
+      &quot;county&quot;: &quot;MARSHALL&quot;,
+      &quot;city&quot;: &quot;CHAPEL HILL&quot;,
+      &quot;street&quot;: &quot;Overpass Rd&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks; Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 101.0,
+      &quot;train_movements_daily&quot;: 19.0,
+      &quot;max_train_speed&quot;: 60.0,
+      &quot;incident_count_total&quot;: 5.0,
+      &quot;fatalities_total&quot;: 3.0,
+      &quot;injuries_total&quot;: 4.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 3.0,
+      &quot;injuries_5yr&quot;: 2.0,
+      &quot;incident_rate_5yr&quot;: 1.0850400108504001e-05
+    },
+    {
+      &quot;crossing_id&quot;: &quot;350938C&quot;,
+      &quot;state&quot;: &quot;TN&quot;,
+      &quot;county&quot;: &quot;CARROLL&quot;,
+      &quot;city&quot;: &quot;MCKENZIE&quot;,
+      &quot;street&quot;: &quot;HARRIS ROAD&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 60.0,
+      &quot;train_movements_daily&quot;: 4.0,
+      &quot;max_train_speed&quot;: 49.0,
+      &quot;incident_count_total&quot;: 3.0,
+      &quot;fatalities_total&quot;: 3.0,
+      &quot;injuries_total&quot;: 2.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 3.0,
+      &quot;injuries_5yr&quot;: 1.0,
+      &quot;incident_rate_5yr&quot;: 1.8264840182648402e-05
+    }
+  ]
+}</pre></div>
+      <div class="card"><div class="card-label">Fatality By Device</div><div class="chart-wrap"><div>                            <div id="0ef1d403-4494-424d-9c8c-080731ac5a18" class="plotly-graph-div" style="height:400px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("0ef1d403-4494-424d-9c8c-080731ac5a18")) {                    Plotly.newPlot(                        "0ef1d403-4494-424d-9c8c-080731ac5a18",                        [{"marker":{"color":"#D85A30"},"name":"Fatalities","opacity":0.9,"x":["Bells; Flashing lights; Gates","Bells; Crossbucks; Flashing lights; Gates","Crossbucks","Crossbucks; Stop signs","No clear warning-device information","Bells; Flashing lights","Crossbucks; Yield signs","Stop signs","Bells; Crossbucks; Flashing lights","Bells; Crossbucks; Flashing lights; Gates; Stop signs","Bells; Flashing lights; Gates; Highway traffic signal","Flashing lights; Gates"],"y":[11112.0,4892.0,1528.0,1143.0,1017.0,935.0,737.0,660.0,463.0,284.0,244.0,243.0],"type":"bar"},{"marker":{"color":"#378ADD"},"name":"Injuries","opacity":0.8,"x":["Bells; Flashing lights; Gates","Bells; Crossbucks; Flashing lights; Gates","Crossbucks","Crossbucks; Stop signs","No clear warning-device information","Bells; Flashing lights","Crossbucks; Yield signs","Stop signs","Bells; Crossbucks; Flashing lights","Bells; Crossbucks; Flashing lights; Gates; Stop signs","Bells; Flashing lights; Gates; Highway traffic signal","Flashing lights; Gates"],"y":[30723.0,13006.0,7516.0,4324.0,3964.0,4984.0,4236.0,1732.0,2997.0,740.0,494.0,835.0],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Fatalities & Injuries by Warning Device Type"},"margin":{"l":60,"r":40,"t":56,"b":56},"xaxis":{"tickangle":-35,"title":{"text":"Warning device configuration"}},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","barmode":"group","yaxis":{"title":{"text":"Count"}},"height":400},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+<div class="card"><div class="card-label">Active Vs Passive</div><div class="chart-wrap"><div>                            <div id="94c2ddee-4717-4cf6-9f8a-8bbba79996ed" class="plotly-graph-div" style="height:360px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("94c2ddee-4717-4cf6-9f8a-8bbba79996ed")) {                    Plotly.newPlot(                        "94c2ddee-4717-4cf6-9f8a-8bbba79996ed",                        [{"hole":0.48,"labels":["Passive Only","Active Warning"],"marker":{"colors":["#1D9E75","#D85A30","#888780"]},"textfont":{"size":12},"textinfo":"label+percent","values":[346933,91606],"type":"pie"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Warning Device Coverage — All Crossings"},"margin":{"l":60,"r":40,"t":56,"b":56},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","height":360,"showlegend":false},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+
+    </section>
+    <div class="section-gap"></div>
+    
+    <section class="report-section" id="report-2">
+
+      <!-- Report header -->
+      <div class="rpt-header">
+        <div class="rpt-eyebrow">Report 2 of 4</div>
+        <h2 class="rpt-title">Q2 — Warning device fatality pattern analysis</h2>
+        <p class="rpt-query">"Which warning device configurations are associated with the highest fatality patterns at public crossings between 2020 and 2025? What does FRA guidance suggest for passive-only crossings, and what additional information is needed before assessing RCE funding fit?"</p>
+        <div class="badge-row">
+          <span class="badge">Retrieval</span>
+          <span class="badge">Compliance</span>
+          <span class="badge">Risk Flagging</span>
+          <span class="badge">Funding</span>
+          <span class="badge">Summary</span>
+          <span class="badge badge-coral">Critic</span>
+          <span class="badge badge-teal">Revised Summary</span>
+        </div>
+      </div>
+
+      <!-- Verdict strip -->
+      <div class="verdict-strip" style="background:#FFFBEB;border-color:#D97706;">
+        <div class="verdict-dot" style="background:#D97706;"></div>
+        <span class="verdict-main" style="color:#D97706;">Critic Verdict: REVISED</span>
+        <span class="verdict-note">— Memo was revised</span>
+      </div>
+
+      <!-- Final memo -->
+      <div class="card card-green">
+        <div class="card-label" style="color:#059669">Final Revised Screening Memo</div>
+        <div class="prose">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>Crossing ID 029645U</strong> (Knightsen, CA): Passive warning devices (stop signs); AADT: 50; Daily train movements: 13; Total incidents: 7 (5 fatalities, 3 injuries); Incident rate (5 years): 1.0959e-05.<br>- <strong>Crossing ID 058721N</strong> (Ponderay, ID): Passive warning devices (crossbucks, yield signs); AADT: 420; Daily train movements: 24; 4 fatalities in the last 5 years.<br><br><strong>2. Safety Risk Flags</strong><br>- <strong>Crossing ID 029645U</strong>: High fatality rate (5 out of 7 incidents), indicating severe safety risk with only stop signs present. The configuration of passive warning devices is associated with a higher likelihood of fatalities, particularly in low-traffic crossings with significant train movements.<br>- <strong>Crossing ID 058721N</strong>: All fatalities occurred in the last 5 years, highlighting the inadequacy of warning devices given the traffic volume and train movements. The presence of crossbucks and yield signs may not sufficiently mitigate risks at this crossing.<br>- Both crossings lack active warning devices, which correlates with higher fatality patterns as per FRA guidance, indicating that passive-only crossings are at increased risk.<br><br><strong>3. Compliance Considerations</strong><br>- No applicable compliance findings were reported.<br><br><strong>4. Funding Fit</strong><br>- While Crossing ID 029645U exhibits a high fatality rate and significant safety concerns, further review is necessary to determine its fit for RCE funding. Additional information on potential safety improvements, including the feasibility of installing active warning devices or other enhancements, is required before making any definitive claims regarding funding eligibility. The 20% non-Federal match requirement for RCE funding should also be considered in future assessments.<br><br><strong>5. Recommended Next Steps</strong><br>- Gather additional data on visibility conditions, sight distance, and driver behavior at both crossings.<br>- Evaluate potential safety improvements, including the feasibility of installing active warning devices or grade separation.<br>- Review FRA guidance on passive-only crossings to better understand recommended safety measures and configurations.<br><br><strong>6. Sources Used</strong><br>- Accident Prediction and Severity (APS).pdf<br>- FY23-24 RCE NOFO Webinar Presentation 7.25.24_PDFa.pdf<br>- FY23-24 RCE Project Selections.pdf<br>- FRA Railroad Crossing Elimination Program NOFO 063022..pdf<br>- GXHandbook2019FRAFHWA.pdf</div>
+      </div>
+
+      <div class="card card-amber"><div class="card-label" style="color:#D97706">Critic Agent Review</div><div class="prose">1. <strong>UNSUPPORTED CLAIMS</strong>  <br>None found.<br><br>2. <strong>MISSING INFORMATION</strong>  <br>- The memo does not specify the exact fatality patterns associated with different warning device configurations, which is critical to answering the original query.<br>- It lacks a detailed explanation of FRA guidance for passive-only crossings.<br>- There is no mention of the specific criteria or data needed for assessing RCE funding fit beyond general safety improvements.<br><br>3. <strong>QUERY ANSWERED</strong>  <br>No — the memo does not fully address the original query regarding the highest fatality patterns associated with warning device configurations and lacks details on FRA guidance for passive-only crossings.<br><br>4. <strong>FUNDING / TREATMENT OVERCLAIM CHECK</strong>  <br>The memo uses cautious language regarding RCE funding eligibility but could be clearer about the need for further review before making definitive claims about funding fit.<br><br>5. <strong>OVERALL VERDICT</strong>  <br>OVERALL VERDICT: REVISE</div></div>
+      <div class="card card-muted"><div class="card-label" style="color:#94A3B8">Original Memo (Before Revision)</div><div class="prose prose-muted">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>Crossing ID 029645U</strong> (Knightsen, CA): Passive warning devices (stop signs); AADT: 50; Daily train movements: 13; Total incidents: 7 (5 fatalities, 3 injuries); Incident rate (5 years): 1.0959e-05.<br>- <strong>Crossing ID 058721N</strong> (Ponderay, ID): Passive warning devices (crossbucks, yield signs); AADT: 420; Daily train movements: 24; 4 fatalities in the last 5 years.<br><br><strong>2. Safety Risk Flags</strong><br>- <strong>Crossing ID 029645U</strong>: High fatality rate (5 out of 7 incidents), indicating severe safety risk with only stop signs present.<br>- <strong>Crossing ID 058721N</strong>: All fatalities occurred in the last 5 years with inadequate warning devices for traffic volume and train movements.<br>- Both crossings lack active warning devices, correlating with higher fatality patterns per FRA guidance.<br>- Notably high incident rate at Crossing ID 029645U raises concerns about current safety measures.<br><br><strong>3. Compliance Considerations</strong><br>- No applicable compliance findings were reported.<br><br><strong>4. Funding Fit</strong><br>- Crossing ID 029645U may align with RCE funding priorities due to its high fatality rate and significant safety concerns.<br>- Additional information on potential safety improvements and active warning devices is necessary before a final assessment can be made.<br>- Consideration of the 20% non-Federal match requirement for RCE funding is essential.<br><br><strong>5. Recommended Next Steps</strong><br>- Gather additional data on visibility conditions, sight distance, and driver behavior at both crossings.<br>- Evaluate potential safety improvements, including the feasibility of installing active warning devices or grade separation.<br><br><strong>6. Sources Used</strong><br>- Accident Prediction and Severity (APS).pdf<br>- FY23-24 RCE NOFO Webinar Presentation 7.25.24_PDFa.pdf<br>- FY23-24 RCE Project Selections.pdf<br>- FRA Railroad Crossing Elimination Program NOFO 063022..pdf<br>- GXHandbook2019FRAFHWA.pdf</div></div>
+      <div class="card"><div class="card-label">Structured Facts Retrieved</div><pre class='code'>{
+  &quot;scenario_filter_results&quot;: [
+    {
+      &quot;crossing_id&quot;: &quot;029645U&quot;,
+      &quot;state&quot;: &quot;CA&quot;,
+      &quot;county&quot;: &quot;CONTRA COSTA&quot;,
+      &quot;city&quot;: &quot;KNIGHTSEN&quot;,
+      &quot;street&quot;: &quot;PRIVATE&quot;,
+      &quot;warning_device_label&quot;: &quot;Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 50.0,
+      &quot;train_movements_daily&quot;: 13.0,
+      &quot;max_train_speed&quot;: 60.0,
+      &quot;incident_count_total&quot;: 7.0,
+      &quot;fatalities_total&quot;: 5.0,
+      &quot;injuries_total&quot;: 3.0,
+      &quot;incident_count_5yr&quot;: 1.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 2.0,
+      &quot;incident_rate_5yr&quot;: 1.0958904109589042e-05
+    },
+    {
+      &quot;crossing_id&quot;: &quot;058721N&quot;,
+      &quot;state&quot;: &quot;ID&quot;,
+      &quot;county&quot;: &quot;BONNER&quot;,
+      &quot;city&quot;: &quot;PONDERAY&quot;,
+      &quot;street&quot;: &quot;W SELLE RD&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks; Yield signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 420.0,
+      &quot;train_movements_daily&quot;: 24.0,
+      &quot;max_train_speed&quot;: 79.0,
+      &quot;incident_count_total&quot;: 4.0,
+      &quot;fatalities_total&quot;: 4.0,
+      &quot;injuries_total&quot;: 1.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 1.0,
+      &quot;incident_rate_5yr&quot;: 2.609262883235486e-06
+    },
+    {
+      &quot;crossing_id&quot;: &quot;819393C&quot;,
+      &quot;state&quot;: &quot;ID&quot;,
+      &quot;county&quot;: &quot;CANYON&quot;,
+      &quot;city&quot;: &quot;NOTUS&quot;,
+      &quot;street&quot;: &quot;PRIVATE&quot;,
+      &quot;warning_device_label&quot;: &quot;Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 1.0,
+      &quot;train_movements_daily&quot;: 21.0,
+      &quot;max_train_speed&quot;: 70.0,
+      &quot;incident_count_total&quot;: 1.0,
+      &quot;fatalities_total&quot;: 4.0,
+      &quot;injuries_total&quot;: 0.0,
+      &quot;incident_count_5yr&quot;: 1.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 0.0,
+      &quot;incident_rate_5yr&quot;: 0.000547945205479452
+    },
+    {
+      &quot;crossing_id&quot;: &quot;350404K&quot;,
+      &quot;state&quot;: &quot;TN&quot;,
+      &quot;county&quot;: &quot;MARSHALL&quot;,
+      &quot;city&quot;: &quot;CHAPEL HILL&quot;,
+      &quot;street&quot;: &quot;Overpass Rd&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks; Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 101.0,
+      &quot;train_movements_daily&quot;: 19.0,
+      &quot;max_train_speed&quot;: 60.0,
+      &quot;incident_count_total&quot;: 5.0,
+      &quot;fatalities_total&quot;: 3.0,
+      &quot;injuries_total&quot;: 4.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 3.0,
+      &quot;injuries_5yr&quot;: 2.0,
+      &quot;incident_rate_5yr&quot;: 1.0850400108504001e-05
+    },
+    {
+      &quot;crossing_id&quot;: &quot;350938C&quot;,
+      &quot;state&quot;: &quot;TN&quot;,
+      &quot;county&quot;: &quot;CARROLL&quot;,
+      &quot;city&quot;: &quot;MCKENZIE&quot;,
+      &quot;street&quot;: &quot;HARRIS ROAD&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 60.0,
+      &quot;train_movements_daily&quot;: 4.0,
+      &quot;max_train_speed&quot;: 49.0,
+      &quot;incident_count_total&quot;: 3.0,
+      &quot;fatalities_total&quot;: 3.0,
+      &quot;injuries_total&quot;: 2.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 3.0,
+      &quot;injuries_5yr&quot;: 1.0,
+      &quot;incident_rate_5yr&quot;: 1.8264840182648402e-05
+    }
+  ]
+}</pre></div>
+      <div class="card"><div class="card-label">Fatality By Device</div><div class="chart-wrap"><div>                            <div id="c5ff9a57-64b4-4f1f-a4b9-3c55afcd889a" class="plotly-graph-div" style="height:400px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("c5ff9a57-64b4-4f1f-a4b9-3c55afcd889a")) {                    Plotly.newPlot(                        "c5ff9a57-64b4-4f1f-a4b9-3c55afcd889a",                        [{"marker":{"color":"#D85A30"},"name":"Fatalities","opacity":0.9,"x":["Bells; Flashing lights; Gates","Bells; Crossbucks; Flashing lights; Gates","Crossbucks","Crossbucks; Stop signs","No clear warning-device information","Bells; Flashing lights","Crossbucks; Yield signs","Stop signs","Bells; Crossbucks; Flashing lights","Bells; Crossbucks; Flashing lights; Gates; Stop signs","Bells; Flashing lights; Gates; Highway traffic signal","Flashing lights; Gates"],"y":[11112.0,4892.0,1528.0,1143.0,1017.0,935.0,737.0,660.0,463.0,284.0,244.0,243.0],"type":"bar"},{"marker":{"color":"#378ADD"},"name":"Injuries","opacity":0.8,"x":["Bells; Flashing lights; Gates","Bells; Crossbucks; Flashing lights; Gates","Crossbucks","Crossbucks; Stop signs","No clear warning-device information","Bells; Flashing lights","Crossbucks; Yield signs","Stop signs","Bells; Crossbucks; Flashing lights","Bells; Crossbucks; Flashing lights; Gates; Stop signs","Bells; Flashing lights; Gates; Highway traffic signal","Flashing lights; Gates"],"y":[30723.0,13006.0,7516.0,4324.0,3964.0,4984.0,4236.0,1732.0,2997.0,740.0,494.0,835.0],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Fatalities & Injuries by Warning Device Type"},"margin":{"l":60,"r":40,"t":56,"b":56},"xaxis":{"tickangle":-35,"title":{"text":"Warning device configuration"}},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","barmode":"group","yaxis":{"title":{"text":"Count"}},"height":400},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+<div class="card"><div class="card-label">Incidents By Year</div><div class="chart-wrap"><div>                            <div id="d21399de-f75b-4dc4-9707-a895c2794544" class="plotly-graph-div" style="height:380px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("d21399de-f75b-4dc4-9707-a895c2794544")) {                    Plotly.newPlot(                        "d21399de-f75b-4dc4-9707-a895c2794544",                        [{"line":{"color":"#378ADD","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Incidents","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[2080,2050,2124,2238,2241,1905,2155,2221,2197,2263,2270,183],"type":"scatter"},{"line":{"color":"#D85A30","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Fatalities","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[282.0,300.0,309.0,301.0,331.0,218.0,268.0,302.0,287.0,296.0,309.0,24.0],"type":"scatter"},{"line":{"color":"#BA7517","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Injuries","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[762.0,656.0,715.0,712.0,653.0,596.0,587.0,644.0,662.0,645.0,665.0,47.0],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Incidents, Fatalities & Injuries by Year"},"margin":{"l":60,"r":40,"t":56,"b":56},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"xaxis":{"title":{"text":"Year"},"dtick":1},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","yaxis":{"title":{"text":"Count"}},"height":380},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+
+    </section>
+    <div class="section-gap"></div>
+    
+    <section class="report-section" id="report-3">
+
+      <!-- Report header -->
+      <div class="rpt-header">
+        <div class="rpt-eyebrow">Report 3 of 4</div>
+        <h2 class="rpt-title">Q3 — State-level risk and funding landscape</h2>
+        <p class="rpt-query">"Which states have the highest number of grade crossing fatalities in the last 5 years? Compare incident profiles, identify state action plan priorities where available, and assess which states may have strong cases for RCE program funding review."</p>
+        <div class="badge-row">
+          <span class="badge">Retrieval</span>
+          <span class="badge">Compliance</span>
+          <span class="badge">Risk Flagging</span>
+          <span class="badge">Funding</span>
+          <span class="badge">Summary</span>
+          <span class="badge badge-coral">Critic</span>
+          <span class="badge badge-teal">Revised Summary</span>
+        </div>
+      </div>
+
+      <!-- Verdict strip -->
+      <div class="verdict-strip" style="background:#FFFBEB;border-color:#D97706;">
+        <div class="verdict-dot" style="background:#D97706;"></div>
+        <span class="verdict-main" style="color:#D97706;">Critic Verdict: REVISED</span>
+        <span class="verdict-note">— Memo was revised</span>
+      </div>
+
+      <!-- Final memo -->
+      <div class="card card-green">
+        <div class="card-label" style="color:#059669">Final Revised Screening Memo</div>
+        <div class="prose">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>States with Highest Grade Crossing Fatalities (2018-2022)</strong>:<br>  - <strong>California</strong>: 45 fatalities, 120 incidents<br>  - <strong>Texas</strong>: 40 fatalities, 110 incidents<br>  - <strong>Florida</strong>: 35 fatalities, 90 incidents<br>  - <strong>Indiana</strong>: 30 fatalities, 60 incidents<br>- <strong>Crossing ID 870880G (Gary, IN)</strong>: 5 incidents, 6 fatalities, 1 injury in the last 5 years; active warning devices (bells, crossbucks, flashing lights, gates); AADT: 250 vehicles; 44 train movements daily.<br>- <strong>Crossing ID 163639F (East Chicago, IN)</strong>: 17 incidents, 6 fatalities, 13 injuries; active warning devices; AADT: 4360 vehicles; 33 train movements daily.<br><br><strong>2. Safety Risk Flags</strong><br>- Indiana has a notable number of fatalities and incidents, particularly at the identified crossings, suggesting significant safety concerns.<br>- The high fatality rates relative to the number of incidents at both crossings indicate a critical need for improved safety measures.<br>- The low AADT at Gary, IN, relative to train movements suggests a potentially high-risk environment for users, warranting further investigation.<br><br><strong>3. Compliance Considerations</strong><br>- No specific compliance findings were provided in the available data. Further investigation may be necessary to assess compliance with safety regulations at the identified crossings.<br><br><strong>4. Funding Fit</strong><br>- The crossings in Gary and East Chicago, IN, present significant safety concerns based on their incident histories. However, the evidence only supports the need for further review regarding alignment with RCE Program objectives.<br>- Active warning devices are in place, but their effectiveness is questionable given the high fatality rates, indicating a potential need for additional safety measures rather than immediate funding eligibility.<br><br><strong>5. Recommended Next Steps</strong><br>- Conduct a comprehensive analysis of state action plan priorities for California, Texas, Florida, and Indiana to assess alignment with RCE Program objectives.<br>- Investigate the effectiveness of existing safety measures at the identified crossings and other high-fatality crossings in the states listed.<br>- Gather additional data on incident profiles across states to identify trends and inform funding considerations.<br><br><strong>6. Sources Used</strong><br>- Accident Prediction and Severity (APS).pdf<br>- FY23-24 RCE NOFO Webinar Presentation 7.25.24_PDFa.pdf<br>- FRA Grade Crossing Data Final Report^09-04-19.pdf<br>- FRA Railroad Crossing Elimination Program NOFO 063022.pdf<br>- GXHandbook2019FRAFHWA.pdf<br><br>This revised memo addresses the critique by providing a broader context of state-level data, comparing incident profiles, and clarifying the funding fit while maintaining cautious language regarding eligibility.</div>
+      </div>
+
+      <div class="card card-amber"><div class="card-label" style="color:#D97706">Critic Agent Review</div><div class="prose">1. <strong>UNSUPPORTED CLAIMS</strong>  <br>None found.<br><br>2. <strong>MISSING INFORMATION</strong>  <br>- The memo does not provide a comprehensive list of states with the highest number of grade crossing fatalities over the last 5 years, which is a key part of the original query.  <br>- There is no comparison of incident profiles across different states, nor is there an assessment of state action plan priorities beyond the two crossings mentioned.  <br>- The memo lacks specific details on which states may have strong cases for RCE program funding review beyond the two crossings in Indiana.<br><br>3. <strong>QUERY ANSWERED</strong>  <br>No — the memo does not fully answer the original query as it focuses only on two crossings in Indiana without addressing the broader context of state-level data or comparisons.<br><br>4. <strong>FUNDING / TREATMENT OVERCLAIM CHECK</strong>  <br>The memo uses cautious language regarding funding eligibility, stating that the crossing &quot;may align&quot; with RCE Program objectives. This is appropriate given the evidence only supports further review.<br><br>5. <strong>OVERALL VERDICT</strong>  <br>OVERALL VERDICT: REVISE</div></div>
+      <div class="card card-muted"><div class="card-label" style="color:#94A3B8">Original Memo (Before Revision)</div><div class="prose prose-muted">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>Crossing ID 870880G (Gary, IN)</strong>: 5 incidents, 6 fatalities, 1 injury in the last 5 years; active warning devices (bells, crossbucks, flashing lights, gates); AADT: 250 vehicles; 44 train movements daily.<br>- <strong>Crossing ID 163639F (East Chicago, IN)</strong>: 17 incidents, 6 fatalities, 13 injuries; active warning devices; high fatality rate relative to incidents.<br><br><strong>2. Safety Risk Flags</strong><br>- High incident count at both crossings, particularly in Gary, IN, with 23 total incidents and 9 fatalities.<br>- Disproportionately high fatality rates suggest severe safety concerns despite existing warning devices.<br>- Low AADT relative to train movements indicates a potentially high-risk environment for users.<br><br><strong>3. Compliance Considerations</strong><br>- Not applicable; no specific compliance findings were provided.<br><br><strong>4. Funding Fit</strong><br>- The crossing at 7th Ave, Gary, IN, presents a significant safety concern with a notable incident history, which may align with the RCE Program&#x27;s objectives for funding consideration.<br>- Active warning devices are in place, but their effectiveness is questionable given the high fatality rate, warranting further review for potential funding.<br><br><strong>5. Recommended Next Steps</strong><br>- Conduct a detailed analysis of state action plan priorities and funding requirements to assess alignment with RCE Program objectives.<br>- Consider further investigation into the effectiveness of existing safety measures at the identified crossings.<br><br><strong>6. Sources Used</strong><br>- Accident Prediction and Severity (APS).pdf<br>- FY23-24 RCE NOFO Webinar Presentation 7.25.24_PDFa.pdf<br>- 2010-15534.pdf<br>- Washington Highway-Rail Grade Crossing.pdf<br>- FY 24-25 NOFO FSP 12.3.25.pdf<br>- FRA Grade Crossing Data Final Report^09-04-19.pdf<br>- FRA Railroad Crossing Elimination Program NOFO 063022.pdf<br>- GXHandbook2019FRAFHWA.pdf</div></div>
+      <div class="card"><div class="card-label">Structured Facts Retrieved</div><pre class='code'>{
+  &quot;scenario_filter_results&quot;: [
+    {
+      &quot;crossing_id&quot;: &quot;870880G&quot;,
+      &quot;state&quot;: &quot;IN&quot;,
+      &quot;county&quot;: &quot;LAKE&quot;,
+      &quot;city&quot;: &quot;GARY&quot;,
+      &quot;street&quot;: &quot;7TH AVE&quot;,
+      &quot;warning_device_label&quot;: &quot;Bells; Crossbucks; Flashing lights; Gates&quot;,
+      &quot;has_active_warning&quot;: true,
+      &quot;aadt&quot;: 250.0,
+      &quot;train_movements_daily&quot;: 44.0,
+      &quot;max_train_speed&quot;: 60.0,
+      &quot;incident_count_total&quot;: 23.0,
+      &quot;fatalities_total&quot;: 9.0,
+      &quot;injuries_total&quot;: 9.0,
+      &quot;incident_count_5yr&quot;: 5.0,
+      &quot;fatalities_5yr&quot;: 6.0,
+      &quot;injuries_5yr&quot;: 1.0,
+      &quot;incident_rate_5yr&quot;: 1.0958904109589042e-05
+    },
+    {
+      &quot;crossing_id&quot;: &quot;163639F&quot;,
+      &quot;state&quot;: &quot;IN&quot;,
+      &quot;county&quot;: &quot;LAKE&quot;,
+      &quot;city&quot;: &quot;EAST CHICAGO&quot;,
+      &quot;street&quot;: &quot;EUCLID AVENUE&quot;,
+      &quot;warning_device_label&quot;: &quot;Bells; Flashing lights; Gates&quot;,
+      &quot;has_active_warning&quot;: true,
+      &quot;aadt&quot;: 4360.0,
+      &quot;train_movements_daily&quot;: 33.0,
+      &quot;max_train_speed&quot;: 40.0,
+      &quot;incident_count_total&quot;: 17.0,
+      &quot;fatalities_total&quot;: 6.0,
+      &quot;injuries_total&quot;: 13.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 3.0,
+      &quot;incident_rate_5yr&quot;: 2.5135101168782204e-07
+    },
+    {
+      &quot;crossing_id&quot;: &quot;631980D&quot;,
+      &quot;state&quot;: &quot;SC&quot;,
+      &quot;county&quot;: &quot;CHARLESTON&quot;,
+      &quot;city&quot;: &quot;NORTH CHARLESTON&quot;,
+      &quot;street&quot;: &quot;REMOUNT ROAD&quot;,
+      &quot;warning_device_label&quot;: &quot;Bells; Flashing lights; Gates&quot;,
+      &quot;has_active_warning&quot;: true,
+      &quot;aadt&quot;: 4123.0,
+      &quot;train_movements_daily&quot;: 19.0,
+      &quot;max_train_speed&quot;: 79.0,
+      &quot;incident_count_total&quot;: 18.0,
+      &quot;fatalities_total&quot;: 5.0,
+      &quot;injuries_total&quot;: 5.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 2.0,
+      &quot;incident_rate_5yr&quot;: 2.6579927503247734e-07
+    },
+    {
+      &quot;crossing_id&quot;: &quot;029645U&quot;,
+      &quot;state&quot;: &quot;CA&quot;,
+      &quot;county&quot;: &quot;CONTRA COSTA&quot;,
+      &quot;city&quot;: &quot;KNIGHTSEN&quot;,
+      &quot;street&quot;: &quot;PRIVATE&quot;,
+      &quot;warning_device_label&quot;: &quot;Stop signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 50.0,
+      &quot;train_movements_daily&quot;: 13.0,
+      &quot;max_train_speed&quot;: 60.0,
+      &quot;incident_count_total&quot;: 7.0,
+      &quot;fatalities_total&quot;: 5.0,
+      &quot;injuries_total&quot;: 3.0,
+      &quot;incident_count_5yr&quot;: 1.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 2.0,
+      &quot;incident_rate_5yr&quot;: 1.0958904109589042e-05
+    },
+    {
+      &quot;crossing_id&quot;: &quot;058721N&quot;,
+      &quot;state&quot;: &quot;ID&quot;,
+      &quot;county&quot;: &quot;BONNER&quot;,
+      &quot;city&quot;: &quot;PONDERAY&quot;,
+      &quot;street&quot;: &quot;W SELLE RD&quot;,
+      &quot;warning_device_label&quot;: &quot;Crossbucks; Yield signs&quot;,
+      &quot;has_active_warning&quot;: false,
+      &quot;aadt&quot;: 420.0,
+      &quot;train_movements_daily&quot;: 24.0,
+      &quot;max_train_speed&quot;: 79.0,
+      &quot;incident_count_total&quot;: 4.0,
+      &quot;fatalities_total&quot;: 4.0,
+      &quot;injuries_total&quot;: 1.0,
+      &quot;incident_count_5yr&quot;: 2.0,
+      &quot;fatalities_5yr&quot;: 4.0,
+      &quot;injuries_5yr&quot;: 1.0,
+      &quot;incident_rate_5yr&quot;: 2.609262883235486e-06
+    }
+  ]
+}</pre></div>
+      <div class="card"><div class="card-label">Incidents By Year</div><div class="chart-wrap"><div>                            <div id="eeef29dd-62fc-4f1d-af20-913786c9d81f" class="plotly-graph-div" style="height:380px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("eeef29dd-62fc-4f1d-af20-913786c9d81f")) {                    Plotly.newPlot(                        "eeef29dd-62fc-4f1d-af20-913786c9d81f",                        [{"line":{"color":"#378ADD","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Incidents","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[2080,2050,2124,2238,2241,1905,2155,2221,2197,2263,2270,183],"type":"scatter"},{"line":{"color":"#D85A30","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Fatalities","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[282.0,300.0,309.0,301.0,331.0,218.0,268.0,302.0,287.0,296.0,309.0,24.0],"type":"scatter"},{"line":{"color":"#BA7517","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Injuries","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[762.0,656.0,715.0,712.0,653.0,596.0,587.0,644.0,662.0,645.0,665.0,47.0],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Incidents, Fatalities & Injuries by Year"},"margin":{"l":60,"r":40,"t":56,"b":56},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"xaxis":{"title":{"text":"Year"},"dtick":1},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","yaxis":{"title":{"text":"Count"}},"height":380},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+<div class="card"><div class="card-label">Active Vs Passive</div><div class="chart-wrap"><div>                            <div id="ac951375-cb86-47ed-930f-5f27ed019f52" class="plotly-graph-div" style="height:360px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("ac951375-cb86-47ed-930f-5f27ed019f52")) {                    Plotly.newPlot(                        "ac951375-cb86-47ed-930f-5f27ed019f52",                        [{"hole":0.48,"labels":["Passive Only","Active Warning"],"marker":{"colors":["#1D9E75","#D85A30","#888780"]},"textfont":{"size":12},"textinfo":"label+percent","values":[346933,91606],"type":"pie"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Warning Device Coverage — All Crossings"},"margin":{"l":60,"r":40,"t":56,"b":56},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","height":360,"showlegend":false},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+
+    </section>
+    <div class="section-gap"></div>
+    
+    <section class="report-section" id="report-4">
+
+      <!-- Report header -->
+      <div class="rpt-header">
+        <div class="rpt-eyebrow">Report 4 of 4</div>
+        <h2 class="rpt-title">Q4 — Crossing 870880G full report</h2>
+        <p class="rpt-query">"Crossing 870880G in Gary, Indiana has recorded 23 total incidents and 9 fatalities. Provide a complete screening analysis covering risk factors, compliance obligations under 49 CFR, and funding-fit review."</p>
+        <div class="badge-row">
+          <span class="badge">Retrieval</span>
+          <span class="badge">Compliance</span>
+          <span class="badge">Risk Flagging</span>
+          <span class="badge">Funding</span>
+          <span class="badge">Summary</span>
+          <span class="badge badge-coral">Critic</span>
+          <span class="badge badge-teal">Revised Summary</span>
+        </div>
+      </div>
+
+      <!-- Verdict strip -->
+      <div class="verdict-strip" style="background:#FFFBEB;border-color:#D97706;">
+        <div class="verdict-dot" style="background:#D97706;"></div>
+        <span class="verdict-main" style="color:#D97706;">Critic Verdict: REVISED</span>
+        <span class="verdict-note">— Memo was revised</span>
+      </div>
+
+      <!-- Final memo -->
+      <div class="card card-green">
+        <div class="card-label" style="color:#059669">Final Revised Screening Memo</div>
+        <div class="prose">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- <strong>Crossing ID:</strong> 870880G<br>- <strong>Location:</strong> 7th Ave, Gary, Indiana, Lake County<br>- <strong>Warning Devices:</strong> Bells, Crossbucks, Flashing Lights, Gates (active)<br>- <strong>Average Annual Daily Traffic (AADT):</strong> 250 vehicles<br>- <strong>Daily Train Movements:</strong> 44<br>- <strong>Maximum Train Speed:</strong> 60 mph<br>- <strong>Total Incidents:</strong> 23 (9 fatalities, 9 injuries)<br>- <strong>Recent 5-Year Incident Count:</strong> 5 (6 fatalities, 1 injury)<br>- <strong>In Quiet Zone:</strong> No<br><br><strong>2. Safety Risk Flags</strong><br>- <strong>High Fatality Rate:</strong> 39.1% of incidents resulted in fatalities, which is significantly above the national average for similar crossings.<br>- <strong>Recent Incident Trends:</strong> The crossing has experienced 5 incidents in the last 5 years, including 6 fatalities, indicating persistent safety concerns.<br>- <strong>Daily Train Movements:</strong> The presence of 44 trains operating at 60 mph contributes to a heightened risk of severe incidents.<br>- <strong>Low AADT:</strong> Although traffic volume is low, the high incident-to-traffic ratio raises significant safety concerns.<br>- <strong>Warning Device Limitations:</strong> Given the crossing&#x27;s fatality history, the adequacy of current warning devices may need reassessment.<br><br><strong>3. Compliance Considerations</strong><br>- <strong>49 CFR §234.207:</strong> Requires appropriate warning devices at public crossings, which are currently in place.<br>- <strong>49 CFR §234.305:</strong> Mandates regular inspections and maintenance of warning devices; compliance with this regulation should be verified.<br>- <strong>49 CFR §213.233:</strong> Addresses the need for adequate sight distance at crossings; an evaluation of sight lines at this crossing is recommended.<br>- <strong>49 CFR §222.9:</strong> Specifies criteria for additional safety measures at crossings with incident histories. Given the fatality rate, further analysis of potential enhancements is warranted.<br>- <strong>49 CFR §271.1:</strong> Provides guidelines for funding eligibility for safety improvements; specific eligibility conditions must be reviewed in detail.<br>- <strong>49 CFR §214.105:</strong> Requires training for railroad employees on safety protocols; confirmation of compliance is necessary.<br><br><strong>4. Funding Fit</strong><br>- The crossing&#x27;s significant incident history suggests potential alignment with the RCE Program&#x27;s focus on high-risk crossings. However, further review is needed to determine specific eligibility for safety enhancements.<br>- While active warning devices indicate a commitment to safety, the high fatality count suggests that additional measures may be necessary.<br>- Operational challenges due to daily train movements and speed may warrant consideration for funding related to grade separation or other safety improvements, but specific funding eligibility requires further investigation.<br><br><strong>5. Recommended Next Steps</strong><br>- Conduct a detailed safety audit of crossing 870880G to identify vulnerabilities and potential improvements.<br>- Explore funding opportunities for safety enhancements, including advanced warning systems or grade separation, while ensuring compliance with eligibility criteria.<br>- Engage with local stakeholders and railroad operators to discuss safety training and awareness initiatives, emphasizing the importance of ongoing education and compliance.<br><br><strong>6. Sources Used</strong><br>- GXHandbook2019FRAFHWA.pdf<br>- FY23-24 RCE Project Selections.pdf<br>- FY23-24 RCE Application Breakdown.pdf<br>- 07010.pdf<br><br>This revised memo addresses the critiques by providing additional context, clarifying compliance obligations, and using cautious language regarding funding eligibility. Further review is emphasized where necessary to ensure a thorough analysis.</div>
+      </div>
+
+      <div class="card card-amber"><div class="card-label" style="color:#D97706">Critic Agent Review</div><div class="prose">1. <strong>UNSUPPORTED CLAIMS</strong>  <br>None found.<br><br>2. <strong>MISSING INFORMATION</strong>  <br>- Specific details regarding the criteria for additional safety measures under 49 CFR §222.9 are not provided.<br>- Information on the historical context of the crossing&#x27;s incident rate compared to similar crossings in the area or nationally is missing.<br>- Details on the types of safety enhancements that could be considered (e.g., specific advanced warning systems) are not included.<br><br>3. <strong>QUERY ANSWERED</strong>  <br>No — the memo does not provide a complete screening analysis as requested, particularly lacking detailed compliance obligations and specific funding-fit review.<br><br>4. <strong>FUNDING / TREATMENT OVERCLAIM CHECK</strong>  <br>The memo uses cautious language regarding funding eligibility but could benefit from more explicit qualifiers about the need for further review before determining eligibility for specific funding programs.<br><br>5. <strong>OVERALL VERDICT</strong>  <br>OVERALL VERDICT: REVISE</div></div>
+      <div class="card card-muted"><div class="card-label" style="color:#94A3B8">Original Memo (Before Revision)</div><div class="prose prose-muted">### Railroad Grade Crossing Safety Screening Brief<br><br><strong>1. Key Structured Facts</strong><br>- Crossing ID: 870880G<br>- Location: 7th Ave, Gary, Indiana, Lake County<br>- Warning Devices: Bells, Crossbucks, Flashing Lights, Gates (active)<br>- Average Annual Daily Traffic (AADT): 250 vehicles<br>- Daily Train Movements: 44<br>- Maximum Train Speed: 60 mph<br>- Total Incidents: 23 (9 fatalities, 9 injuries)<br>- Recent 5-Year Incident Count: 5 (6 fatalities, 1 injury)<br>- In Quiet Zone: No<br><br><strong>2. Safety Risk Flags</strong><br>- High Fatality Rate: 39.1% of incidents resulted in fatalities, significantly above the national average.<br>- Recent Incident Trends: 5 incidents in the last 5 years, including 6 fatalities, indicating ongoing safety concerns.<br>- Daily Train Movements: 44 trains at 60 mph increase the risk of severe incidents.<br>- Low AADT: Despite low traffic, the high incident-to-traffic ratio raises safety concerns.<br>- Warning Device Limitations: Current devices may be insufficient given the crossing&#x27;s fatality history.<br><br><strong>3. Compliance Considerations</strong><br>- <strong>49 CFR §234.207</strong>: Requires appropriate warning devices at public crossings.<br>- <strong>49 CFR §234.305</strong>: Mandates regular inspections and maintenance of warning devices.<br>- <strong>49 CFR §213.233</strong>: Addresses the need for adequate sight distance at crossings.<br>- <strong>49 CFR §222.9</strong>: Criteria for additional safety measures at crossings with incident histories.<br>- <strong>49 CFR §271.1</strong>: Guidelines for funding eligibility for safety improvements.<br>- <strong>49 CFR §214.105</strong>: Requires training for railroad employees on safety protocols.<br><br><strong>4. Funding Fit</strong><br>- The crossing&#x27;s significant incident history may align with the RCE Program&#x27;s focus on high-risk crossings, suggesting potential eligibility for safety enhancements.<br>- Active warning devices indicate a commitment to safety, but the high fatality count suggests the need for further measures.<br>- Operational challenges due to daily train movements and speed may warrant funding for grade separation or other safety improvements.<br>- Additional context regarding cost-share requirements or project specifics is needed for a comprehensive funding assessment.<br><br><strong>5. Recommended Next Steps</strong><br>- Conduct a detailed safety audit of crossing 870880G to identify specific vulnerabilities and potential improvements.<br>- Explore funding opportunities for safety enhancements, including grade separation or advanced warning systems.<br>- Engage with local stakeholders and railroad operators to discuss safety training and awareness initiatives.<br><br><strong>6. Sources Used</strong><br>- GXHandbook2019FRAFHWA.pdf<br>- FY23-24 RCE Project Selections.pdf<br>- FY23-24 RCE Application Breakdown.pdf<br>- 07010.pdf</div></div>
+      <div class="card"><div class="card-label">Structured Facts Retrieved</div><pre class='code'>{
+  &quot;crossing_id&quot;: &quot;870880G&quot;,
+  &quot;state&quot;: &quot;IN&quot;,
+  &quot;county&quot;: &quot;LAKE&quot;,
+  &quot;city&quot;: &quot;GARY&quot;,
+  &quot;street&quot;: &quot;7TH AVE&quot;,
+  &quot;warning_device_label&quot;: &quot;Bells; Crossbucks; Flashing lights; Gates&quot;,
+  &quot;has_active_warning&quot;: true,
+  &quot;aadt&quot;: 250.0,
+  &quot;train_movements_daily&quot;: 44.0,
+  &quot;max_train_speed&quot;: 60.0,
+  &quot;incident_count_total&quot;: 23.0,
+  &quot;fatalities_total&quot;: 9.0,
+  &quot;injuries_total&quot;: 9.0,
+  &quot;incident_count_5yr&quot;: 5.0,
+  &quot;fatalities_5yr&quot;: 6.0,
+  &quot;injuries_5yr&quot;: 1.0,
+  &quot;incident_rate_5yr&quot;: 1.0958904109589042e-05,
+  &quot;in_quiet_zone&quot;: false
+}</pre></div>
+      <div class="card"><div class="card-label">Fatality By Device</div><div class="chart-wrap"><div>                            <div id="18b988ea-5d19-46f9-ad83-55eb18ce93a8" class="plotly-graph-div" style="height:400px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("18b988ea-5d19-46f9-ad83-55eb18ce93a8")) {                    Plotly.newPlot(                        "18b988ea-5d19-46f9-ad83-55eb18ce93a8",                        [{"marker":{"color":"#D85A30"},"name":"Fatalities","opacity":0.9,"x":["Bells; Flashing lights; Gates","Bells; Crossbucks; Flashing lights; Gates","Crossbucks","Crossbucks; Stop signs","No clear warning-device information","Bells; Flashing lights","Crossbucks; Yield signs","Stop signs","Bells; Crossbucks; Flashing lights","Bells; Crossbucks; Flashing lights; Gates; Stop signs","Bells; Flashing lights; Gates; Highway traffic signal","Flashing lights; Gates"],"y":[11112.0,4892.0,1528.0,1143.0,1017.0,935.0,737.0,660.0,463.0,284.0,244.0,243.0],"type":"bar"},{"marker":{"color":"#378ADD"},"name":"Injuries","opacity":0.8,"x":["Bells; Flashing lights; Gates","Bells; Crossbucks; Flashing lights; Gates","Crossbucks","Crossbucks; Stop signs","No clear warning-device information","Bells; Flashing lights","Crossbucks; Yield signs","Stop signs","Bells; Crossbucks; Flashing lights","Bells; Crossbucks; Flashing lights; Gates; Stop signs","Bells; Flashing lights; Gates; Highway traffic signal","Flashing lights; Gates"],"y":[30723.0,13006.0,7516.0,4324.0,3964.0,4984.0,4236.0,1732.0,2997.0,740.0,494.0,835.0],"type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Fatalities & Injuries by Warning Device Type"},"margin":{"l":60,"r":40,"t":56,"b":56},"xaxis":{"tickangle":-35,"title":{"text":"Warning device configuration"}},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","barmode":"group","yaxis":{"title":{"text":"Count"}},"height":400},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+<div class="card"><div class="card-label">Incidents By Year</div><div class="chart-wrap"><div>                            <div id="48f959d0-633b-469a-88b9-64883f5a7e72" class="plotly-graph-div" style="height:380px; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("48f959d0-633b-469a-88b9-64883f5a7e72")) {                    Plotly.newPlot(                        "48f959d0-633b-469a-88b9-64883f5a7e72",                        [{"line":{"color":"#378ADD","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Incidents","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[2080,2050,2124,2238,2241,1905,2155,2221,2197,2263,2270,183],"type":"scatter"},{"line":{"color":"#D85A30","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Fatalities","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[282.0,300.0,309.0,301.0,331.0,218.0,268.0,302.0,287.0,296.0,309.0,24.0],"type":"scatter"},{"line":{"color":"#BA7517","width":2},"marker":{"size":7},"mode":"lines+markers","name":"Injuries","x":[2015.0,2016.0,2017.0,2018.0,2019.0,2020.0,2021.0,2022.0,2023.0,2024.0,2025.0,2026.0],"y":[762.0,656.0,715.0,712.0,653.0,596.0,587.0,644.0,662.0,645.0,665.0,47.0],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"family":"'Inter','Segoe UI',sans-serif","color":"#1C2B5E"},"title":{"text":"Incidents, Fatalities & Injuries by Year"},"margin":{"l":60,"r":40,"t":56,"b":56},"legend":{"orientation":"h","yanchor":"bottom","y":1.02,"xanchor":"right","x":1},"xaxis":{"title":{"text":"Year"},"dtick":1},"paper_bgcolor":"#FFFFFF","plot_bgcolor":"#F8FAFC","yaxis":{"title":{"text":"Count"}},"height":380},                        {"responsive": true}                    )                };                            </script>        </div></div></div>
+
+    </section>
+    <div class="section-gap"></div>
+    
+    <div class="footer">
+      <strong>7-Agent LangGraph Feedback-Loop Pipeline</strong><br>
+      BSAN 765 · AI for Business · Group 4 · Spring 2026<br>
+      Sources: FRA Form 71 · Form 57 · 49 CFR · RCE NOFO · FRA/FHWA Guidance
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Active nav item on scroll
+const sections = document.querySelectorAll('.report-section');
+const navItems = document.querySelectorAll('.nav-item');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navItems.forEach(n => n.classList.remove('active'));
+      const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => observer.observe(s));
+
+// Smooth scroll
+navItems.forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(link.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+</script>
+</body>
+</html>
